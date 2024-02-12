@@ -189,3 +189,12 @@ fabric.properties
 
 # Built Visual Studio Code Extensions
 *.vsix
+
+
+# Project Specific
+
+*_plot.png
+
+# Ignore everything in the folder xcept for .gitkeep
+wisdom/training_data/*
+!wisdom/training_data/.gitkeep

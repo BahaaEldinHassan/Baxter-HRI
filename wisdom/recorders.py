@@ -5,10 +5,14 @@ import cv2
 import mediapipe as mp
 import numpy as np
 
+from .settings import TRAINING_DATA_DIR
+
 
 class HandGestureRecorder(AbstractContextManager):
     def __enter__(self):
         # self.run()
+        self._lazy_initialization()
+
         return self
 
     def __exit__(self, __exc_type, __exc_value, __traceback):
@@ -29,10 +33,17 @@ class HandGestureRecorder(AbstractContextManager):
         # Initialize MediaPipe Drawing
         self.mp_drawing = mp.solutions.drawing_utils
 
+        self.training_data_dir = TRAINING_DATA_DIR / self.__class__.__name__ / self.label
+
+    def _lazy_initialization(self):
+        # Lazy initializations.
+        if not self.training_data_dir.exists():
+            self.training_data_dir.mkdir(parents=True)
+
     def record_frame(self, data):
         timestamp = int(time.time())
         filename = f"{self.__class__.__name__}__{self.label}__{timestamp}.npy"
-        np.save(filename, np.array(data))
+        np.save(self.training_data_dir / filename, np.array(data))
 
     def run(self):
         while self.cap.isOpened():

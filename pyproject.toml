@@ -34,7 +34,10 @@ omit = [
   "*/tests/*",
   "manage.py",
 ]
-source = ["wisdom"]
+source = [
+  "savant",
+  "wisdom",
+]
 
 [tool.coverage.report]
 show_missing = true
