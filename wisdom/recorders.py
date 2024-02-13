@@ -6,6 +6,7 @@ import mediapipe as mp
 import numpy as np
 
 from .settings import TRAINING_DATA_DIR
+from .utils import get_bounding_box, landmark_to_ratio
 
 
 class HandGestureRecorder(AbstractContextManager):
@@ -40,10 +41,10 @@ class HandGestureRecorder(AbstractContextManager):
         if not self.training_data_dir.exists():
             self.training_data_dir.mkdir(parents=True)
 
-    def record_frame(self, data):
+    def record_landmark(self, landmark_data):
         timestamp = int(time.time())
         filename = f"{self.__class__.__name__}__{self.label}__{timestamp}.npy"
-        np.save(self.training_data_dir / filename, np.array(data))
+        np.save(self.training_data_dir / filename, np.array(landmark_data).flatten())
 
     def run(self):
         while self.cap.isOpened():
@@ -53,20 +54,35 @@ class HandGestureRecorder(AbstractContextManager):
             if not ret:
                 break
 
-            # Convert the image to RGB
+            h, w, c = frame.shape
+
             frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
 
             # Process the image with MediaPipe
             results = self.hands.process(frame_rgb)
-            landmarks_data = None
+
+            # This will only contain the final landmark data if there are more.
+            processed_landmark_data = None
 
             if results.multi_hand_landmarks:
                 for hand_landmarks in results.multi_hand_landmarks:
-                    # Convert landmarks to a 2D array
-                    landmarks_data = np.array([[lm.x, lm.y, lm.z] for lm in hand_landmarks.landmark]).flatten()
+                    bbox = get_bounding_box((w, h), hand_landmarks)
 
-                    # Render landmarks on the image
+                    # Draw the landmarks and a rectangle around it.
+                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
                     self.mp_drawing.draw_landmarks(frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+
+                    processed_landmark_data = []
+
+                    for idx, landmark in enumerate(hand_landmarks.landmark):
+                        x, y = int(landmark.x * w), int(landmark.y * h)
+
+                        # Draw landmarks on image
+                        # cv2.circle(frame, (x, y), 5, (255, 0, 0), -1)
+
+                        # Convert landmark to ratio
+                        ratio_x, ratio_y = landmark_to_ratio((x, y), bbox)
+                        processed_landmark_data.append((ratio_x, ratio_y))
 
             cv2.imshow("Hand Landmarks", frame)
 
@@ -79,5 +95,5 @@ class HandGestureRecorder(AbstractContextManager):
 
             # Record the frame when 'r' is pressed.
             if key == ord("r"):
-                if landmarks_data is not None:
-                    self.record_frame(landmarks_data)
+                if processed_landmark_data is not None:
+                    self.record_landmark(processed_landmark_data)

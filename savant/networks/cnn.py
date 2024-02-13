@@ -9,56 +9,73 @@ from savant.settings import NN_DEVICE
 from .common import ModelBase, RunnerBase
 
 
+class PrintShape(nn.Module):
+    def forward(self, x):
+        print("Shape:", x.shape)
+        print("---")
+        return x
+
+
 class CNNModel(ModelBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
         conv_layers = []
-        num_layers = 1
 
-        for num_layer in range(num_layers):
+        feature_dimension = (21, 2)
+
+        num_conv_layers = 2
+        conv_in_channels = 1
+        conv_out_channels = 16
+
+        for _ in range(num_conv_layers):
             conv_layer = [
-                nn.Conv1d(in_channels=1, out_channels=32, kernel_size=3, stride=1, padding=1),
-                nn.ReLU(inplace=True),
+                nn.Conv2d(
+                    in_channels=conv_in_channels, out_channels=conv_out_channels, kernel_size=3, stride=1, padding=1
+                ),
+                nn.ReLU(),
+                # NOTE: No max-pooling, input dimension is already low.
+                # nn.MaxPool2d(kernel_size=2, stride=2),
             ]
 
-            if num_layer == num_layers - 1:
-                conv_layer.append(nn.AdaptiveMaxPool1d(output_size=self.out_features))
-            else:
-                conv_layer.append(nn.MaxPool1d(kernel_size=2, stride=2))
-
             conv_layers.extend(conv_layer)
+
+            # Update in and out channels.
+            conv_in_channels = conv_out_channels
+            conv_out_channels = conv_in_channels * 2
 
         self.net = nn.Sequential(
             *conv_layers,
             nn.Flatten(),
-            nn.Linear(in_features=32, out_features=self.out_features),
+            # conv_in_channels is the number of output channels from the final conv layer.
+            nn.Linear(in_features=conv_in_channels * feature_dimension[0] * feature_dimension[1], out_features=64),
+            nn.ReLU(),
+            nn.Linear(in_features=64, out_features=self.out_features),
         )
 
-        self.activation = nn.Sigmoid()
-
     def forward(self, x):
-        x = self.net(torch.unsqueeze(x, 1))
+        # print(x.unsqueeze(1))
+        # print(x.unsqueeze(1).shape)
+        x = self.net(x.unsqueeze(1))
 
-        return self.activation(x)
+        return x
 
 
 class CNNRunner(RunnerBase):
-    def __init__(self, **kwargs):
-        super().__init__(**kwargs)
+    def initialize(self):
+        super().initialize()
 
         self.model = CNNModel(in_features=self.in_features, out_features=self.out_features).to(NN_DEVICE)
 
         # Loss function
-        self.criterion = nn.BCELoss().to(NN_DEVICE)
+        self.criterion = nn.CrossEntropyLoss().to(NN_DEVICE)
 
         # Optimizer
         self.optimizer = optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
 
     def train_step(self, features, target_outputs):
-        calculated_outputs = self.model(features)  # Add a channel dimension for input data
-        # print(features.shape, target_outputs.shape, target_outputs.unsqueeze(1).shape, calculated_outputs.shape)
-        loss = self.criterion(calculated_outputs, target_outputs.unsqueeze(1))
+        calculated_outputs = self.model(features)
+        loss = self.criterion(calculated_outputs, target_outputs)
 
         self.optimizer.zero_grad()
         loss.backward()

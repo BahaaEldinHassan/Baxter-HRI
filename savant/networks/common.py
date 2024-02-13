@@ -27,49 +27,25 @@ class RunnerBase(abc.ABC):
     def __init__(self, **kwargs):
         print("Initializing Runner:", self.__class__.__name__)
 
-        self.learning_rate = kwargs["learning_rate"]
-        self.momentum = 0.9  # kwargs["momentum"]
-        self.num_epochs = kwargs["num_epochs"]
-        self.current_epoch = 0
-        self.in_features = kwargs["in_features"]
-        self.out_features = kwargs["out_features"]
-        self.num_gates = kwargs.get("num_gates", 1)
-
-        self.model: typing.Optional[ModelBase] = None
+        self._initialized = False
         self.criterion: typing.Optional[nn.Module] = None
-        self.mse_criterion = nn.MSELoss().to(NN_DEVICE)
-        self.optimizer: typing.Optional[nn.Module] = None
-
+        self.current_epoch = 0
         self.epoch_losses = {
             "training": [],
             "validation": [],
         }
+        self.in_features = kwargs.get("in_features")
+        self.label_mappings = kwargs.get("label_mappings")
+        self.learning_rate = kwargs.get("learning_rate")
+        self.model: typing.Optional[ModelBase] = None
+        self.momentum = kwargs.get("momentum")
+        self.num_epochs = kwargs.get("num_epochs")
+        self.num_gates = kwargs.get("num_gates")
+        self.optimizer: typing.Optional[nn.Module] = None
+        self.out_features = kwargs.get("out_features")
 
-    # def evaluate(self, dataloader):
-    #     # Calculate validation loss.
-    #     self.model.eval()
-    #
-    #     total_mse = 0.0
-    #     total_spe = 0.0
-    #     num_samples = len(dataloader.dataset)
-    #
-    #     with torch.no_grad():
-    #         for features, target_outputs in dataloader:
-    #             calculated_outputs = self.model(features)
-    #
-    #             # Keep adding RMSE
-    #             # NOTE: .item() returns scalar with total loss.
-    #             total_mse += self.mse_criterion(calculated_outputs, target_outputs).item()
-    #
-    #             # RMSPE
-    #             total_spe += calculate_total_squared_percentage_error(calculated_outputs, target_outputs)
-    #
-    #     # Calculate average RMSE and RMSPE
-    #     rmse = numpy.sqrt(total_mse / num_samples)
-    #     rmspe = numpy.sqrt(total_spe / num_samples)
-    #
-    #     print(f"RMSE: {rmse:.10f}")
-    #     print(f"RMSPE: {rmspe:.10f}")
+    def evaluate(self, dataloader):
+        ...
 
     @staticmethod
     def get_best_epoch(epoch_losses, default):
@@ -78,17 +54,29 @@ class RunnerBase(abc.ABC):
         except ValueError:
             return default
 
+    def initialize(self):
+        if not self._initialized:
+            self._initialized = True
+
     def load_state(self, state_filename):
         checkpoint = torch.load(state_filename)
 
-        self.model.load_state_dict(checkpoint["model_state"])
-        self.optimizer.load_state_dict(checkpoint["optimizer_state"])
+        # NOTE: These parameters must be initialized first before calling `initialize()`.
+        self.in_features = checkpoint["in_features"]
+        self.learning_rate = checkpoint["learning_rate"]
+        self.momentum = checkpoint["momentum"]
+        self.num_gates = checkpoint["num_gates"]
+        self.out_features = checkpoint["out_features"]
+
+        self.initialize()
+
         self.criterion.load_state_dict(checkpoint["criterion_state"])
-
-        self.num_epochs = checkpoint["num_epochs"]
         self.current_epoch = checkpoint["current_epoch"]
-
         self.epoch_losses = checkpoint["epoch_losses"]
+        self.label_mappings = checkpoint["label_mappings"]
+        self.model.load_state_dict(checkpoint["model_state"])
+        self.num_epochs = checkpoint["num_epochs"]
+        self.optimizer.load_state_dict(checkpoint["optimizer_state"])
 
     def save_loss_plot(self, target_filename="loss_plot.png"):
         # Extract losses for training and validation.
@@ -127,41 +115,29 @@ class RunnerBase(abc.ABC):
         # Save the plot to an image file.
         plt.savefig(target_filename)
 
-    # def predict(self, test_features):
-    #     self.model.eval()
-    #
-    #     predictions = {}
-    #
-    #     with torch.no_grad():
-    #         for features in test_features:
-    #             store_id = features[0]
-    #
-    #             if not numpy.isnan(store_id):
-    #                 scaled_features = self.feature_scaler.transform(features[1:].reshape(1, -1))
-    #                 calculated_outputs = self.model(to_tensors(scaled_features)[0])
-    #
-    #                 calculated_output = float(
-    #                     self.output_scaler.inverse_transform(tensor_to_numpy(calculated_outputs)).reshape(-1)
-    #                 )
-    #
-    #                 if numpy.isnan(calculated_output) or (calculated_output < 0):
-    #                     calculated_output = 0.0
-    #
-    #                 predictions[int(store_id)] = calculated_output
-    #
-    #     df = pandas.DataFrame(list(predictions.items()), columns=["Id", "Sales"])
-    #
-    #     df.to_csv(DATA_ROOT_DIR / "final_submission.csv", index=False, quoting=csv.QUOTE_NONNUMERIC)
+    def predict(self, features):
+        self.model.eval()
+
+        with torch.no_grad():
+            calculated_outputs = self.model(to_tensors(features)[0])
+
+            return calculated_outputs
 
     def save_state(self, state_filename):
         torch.save(
             {
+                "criterion_state": self.criterion.state_dict(),
                 "current_epoch": self.current_epoch,
                 "epoch_losses": self.epoch_losses,
-                "num_epochs": self.num_epochs,
+                "in_features": self.in_features,
+                "label_mappings": self.label_mappings,
+                "learning_rate": self.learning_rate,
                 "model_state": self.model.state_dict(),
+                "momentum": self.momentum,
+                "num_epochs": self.num_epochs,
+                "num_gates": self.num_gates,
                 "optimizer_state": self.optimizer.state_dict(),
-                "criterion_state": self.criterion.state_dict(),
+                "out_features": self.out_features,
             },
             state_filename,
         )
@@ -181,13 +157,15 @@ class RunnerBase(abc.ABC):
             for features, target_outputs in dataloader:
                 calculated_outputs = self.model(features)
 
-                total_validation_loss += self.criterion(calculated_outputs, target_outputs.unsqueeze(1)).item()
+                total_validation_loss += self.criterion(calculated_outputs, target_outputs).item()
 
         validation_loss_avg = total_validation_loss / num_samples
 
         return validation_loss_avg
 
     def train(self, train_loader, validation_loader):
+        self.initialize()
+
         num_samples = len(train_loader.dataset)
 
         while self.current_epoch < self.num_epochs:
@@ -225,3 +203,21 @@ class RunnerBase(abc.ABC):
             )
 
             self.current_epoch += 1
+
+    def generate_label_probabilities(self, probabilities):
+        # Convert probabilities tensor to a list
+        probabilities_list = probabilities.squeeze().tolist()
+
+        # Zip class labels with their corresponding probabilities
+        label_probabilities = zip(self.label_mappings.keys(), probabilities_list)
+
+        # Convert to dictionary
+        label_probabilities_dict = dict(label_probabilities)
+
+        # Sort the label_probabilities_dict based on probabilities in descending order
+        sorted_label_probabilities = sorted(label_probabilities_dict.items(), key=lambda item: item[1], reverse=True)
+
+        # Convert the sorted list of tuples back to a dictionary
+        sorted_label_probabilities_dict = dict(sorted_label_probabilities)
+
+        return sorted_label_probabilities_dict

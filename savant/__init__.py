@@ -26,12 +26,20 @@ _runners_map = {
     type=click.Choice(list(_datasets_map.keys()), case_sensitive=False),
 )
 @click.option(
-    "-m",
+    "-M",
     "--model",
     default="cnn",
     help="Neural network model to use.",
     required=False,
     type=click.Choice(list(_runners_map.keys()), case_sensitive=False),
+)
+@click.option(
+    "-m",
+    "--momentum",
+    default=0.99,
+    help="SGD Momentum.",
+    required=False,
+    type=float,
 )
 @click.option(
     "-g",
@@ -41,7 +49,7 @@ _runners_map = {
     required=False,
     type=int,
 )
-def main(num_epochs, learning_rate, dataset, model, num_gates):
+def main(num_epochs, learning_rate, dataset, model, momentum, num_gates):
     dataset_obj = _datasets_map[dataset]()
     train_loader, validation_loader, test_loader = dataset_obj.process()
 
@@ -49,15 +57,18 @@ def main(num_epochs, learning_rate, dataset, model, num_gates):
         "CLI Args: "
         f"num_epochs={num_epochs}; "
         f"learning_rate={learning_rate}; "
+        f"momentum={momentum}; "
         f"dataset={dataset}; "
         f"model={model}; "
         f"num_gates={num_gates}"
     )
 
     runner_kwargs = {
-        "learning_rate": learning_rate,
-        "num_epochs": num_epochs,
         "in_features": dataset_obj.in_features,
+        "label_mappings": dataset_obj.get_label_mappings(),
+        "learning_rate": learning_rate,
+        "momentum": momentum,
+        "num_epochs": num_epochs,
         "out_features": dataset_obj.out_features,
     }
 
@@ -76,7 +87,7 @@ def main(num_epochs, learning_rate, dataset, model, num_gates):
     except KeyboardInterrupt:
         ...
 
-    # runner.save_state(checkpoint_filename)
+    runner.save_state(checkpoint_filename)
 
     # runner.evaluate(test_loader)
 
