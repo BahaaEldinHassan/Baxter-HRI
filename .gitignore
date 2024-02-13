@@ -197,5 +197,5 @@ fabric.properties
 *_plot.png
 
 # Ignore everything in the folder xcept for .gitkeep
-wisdom/training_data/*
-!wisdom/training_data/.gitkeep
+ml_nn_vision/wisdom/training_data/*
+!ml_nn_vision/wisdom/training_data/.gitkeep
