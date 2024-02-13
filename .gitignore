@@ -193,6 +193,7 @@ fabric.properties
 
 # Project Specific
 
+*.ckpt
 *_plot.png
 
 # Ignore everything in the folder xcept for .gitkeep
