@@ -6,8 +6,8 @@ import cv2
 import mediapipe as mp
 import numpy as np
 import torch.nn.functional as F
-
 from savant.networks.cnn import CNNRunner
+from wisdom.common import CameraFeedProcessor
 from wisdom.utils import get_bounding_box, landmark_to_numpy, landmark_to_ratio
 
 
@@ -20,13 +20,9 @@ class HandGestureInferrer(AbstractContextManager):
 
     def __exit__(self, __exc_type, __exc_value, __traceback):
         # Release the VideoCapture and destroy OpenCV windows
-        self.cap.release()
-        cv2.destroyAllWindows()
+        self.camera_feed_proc.close()
 
-    def __init__(self):
-        # OpenCV Video Capture
-        self.cap = cv2.VideoCapture(0)
-
+    def __init__(self, **kwargs):
         # Initialize MediaPipe Hands
         self.mp_hands = mp.solutions.hands
         self.hands = self.mp_hands.Hands()
@@ -35,6 +31,8 @@ class HandGestureInferrer(AbstractContextManager):
         self.mp_drawing = mp.solutions.drawing_utils
 
         self.network: typing.Optional[CNNRunner] = None
+
+        self.camera_feed_proc = CameraFeedProcessor()
 
     def _initialize_network(self):
         runner = CNNRunner()
@@ -52,36 +50,9 @@ class HandGestureInferrer(AbstractContextManager):
     def _initialize(self):
         self._initialize_network()
 
-    def display_label_text(self, frame, bbox, label, font_scale=0.5, thickness=1):
-        # Unpack the bounding box coordinates
-        x_min, y_min, x_max, y_max = bbox
-
-        # Draw bounding box
-        cv2.rectangle(frame, (x_min, y_min), (x_max, y_max), (0, 255, 0), thickness)
-
-        # Calculate position for label text
-        text_size = cv2.getTextSize(label, cv2.FONT_HERSHEY_SIMPLEX, font_scale, thickness)
-        text_width, text_height = text_size[0]
-        text_baseline = text_size[1]
-        text_x = x_min
-        text_y = y_min - text_baseline
-
-        # Draw label text
-        cv2.putText(frame, label, (text_x, text_y), cv2.FONT_HERSHEY_SIMPLEX, font_scale, (0, 255, 0), thickness)
-
     def run(self):
-        while self.cap.isOpened():
-            # Read a frame from the webcam
-            ret, frame = self.cap.read()
-
-            if not ret:
-                break
-
-            frame = cv2.flip(frame, 1)
-
-            h, w, c = frame.shape
-
-            frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+        def process_frame_hook(frame, frame_rgb, frame_shape):
+            h, w, c = frame_shape
 
             # Process the image with MediaPipe
             results = self.hands.process(frame_rgb)
@@ -90,8 +61,7 @@ class HandGestureInferrer(AbstractContextManager):
                 for hand_landmarks in results.multi_hand_landmarks:
                     bbox = get_bounding_box((w, h), hand_landmarks)
 
-                    # Draw the landmarks and a rectangle around it.
-                    cv2.rectangle(frame, (bbox[0], bbox[1]), (bbox[2], bbox[3]), (0, 255, 0), 2)
+                    self.camera_feed_proc.draw_rectangle(frame, bbox)
                     self.mp_drawing.draw_landmarks(frame, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
 
                     processed_landmark_data = []
@@ -111,17 +81,10 @@ class HandGestureInferrer(AbstractContextManager):
                         label_probabilities = self.network.generate_label_probabilities(probabilities)
                         label_with_highest_probability = next(iter(label_probabilities))
 
-                        self.display_label_text(
+                        self.camera_feed_proc.draw_text_around_bounding_box(
                             frame,
                             bbox,
-                            f"{label_with_highest_probability} ({label_probabilities[label_with_highest_probability]})",
+                            f"{label_with_highest_probability}",
                         )
 
-            cv2.imshow("Hand Landmarks", frame)
-
-            # Wait for a key press (1-millisecond delay).
-            key = cv2.waitKey(1) & 0xFF
-
-            # Break the loop when 'q' is pressed.
-            if key == ord("q"):
-                break
+        self.camera_feed_proc.run(process_frame_hook=process_frame_hook)

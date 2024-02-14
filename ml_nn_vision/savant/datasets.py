@@ -6,7 +6,6 @@ import torch
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 from torch.utils.data import DataLoader, TensorDataset
-
 from wisdom.settings import TRAINING_DATA_DIR
 
 from .utils import one_hot_encode_classes, to_tensors

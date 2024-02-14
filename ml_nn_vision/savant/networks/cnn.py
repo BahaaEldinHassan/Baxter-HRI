@@ -1,9 +1,5 @@
-from math import sqrt
-
-import torch
 import torch.nn as nn
 import torch.optim as optim
-
 from savant.settings import NN_DEVICE
 
 from .common import ModelBase, RunnerBase

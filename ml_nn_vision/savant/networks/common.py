@@ -8,7 +8,6 @@ import numpy
 import pandas
 import torch
 import torch.nn as nn
-
 from savant.settings import NN_DEVICE
 from savant.utils import to_tensors
 
