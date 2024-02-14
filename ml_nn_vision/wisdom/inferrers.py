@@ -11,7 +11,7 @@ from wisdom.common import CameraFeedProcessor
 from wisdom.utils import get_bounding_box, landmark_to_numpy, landmark_to_ratio
 
 
-class HandGestureInferrer(AbstractContextManager):
+class HandGestureInferrerLive(AbstractContextManager):
     def __enter__(self):
         # self.run()
         self._initialize()

@@ -10,7 +10,7 @@ from .settings import TRAINING_DATA_DIR
 from .utils import get_bounding_box, landmark_to_ratio
 
 
-class HandGestureRecorder(AbstractContextManager):
+class HandGestureRecorderLive(AbstractContextManager):
     def __enter__(self):
         # self.run()
         self._lazy_initialization()

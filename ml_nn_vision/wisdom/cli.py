@@ -1,7 +1,7 @@
 import click
 
-from .inferrers import HandGestureInferrer
-from .recorders import HandGestureRecorder
+from .inferrers import HandGestureInferrerLive
+from .recorders import HandGestureRecorderLive
 from .settings import LABELS
 
 
@@ -12,7 +12,7 @@ def command_group():
 
 @command_group.command()
 def infer():
-    with HandGestureInferrer() as inferrer:
+    with HandGestureInferrerLive() as inferrer:
         inferrer.run()
 
 
@@ -25,5 +25,5 @@ def infer():
     type=click.Choice(LABELS, case_sensitive=True),
 )
 def record(label):
-    with HandGestureRecorder(label) as recorder:
+    with HandGestureRecorderLive(label) as recorder:
         recorder.run()
