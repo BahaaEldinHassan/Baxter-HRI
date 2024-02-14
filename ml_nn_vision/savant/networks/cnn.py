@@ -1,6 +1,8 @@
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 from savant.settings import NN_DEVICE
+from torch.functional import F
 
 from .common import ModelBase, RunnerBase
 
@@ -68,6 +70,15 @@ class CNNRunner(RunnerBase):
 
         # Optimizer
         self.optimizer = optim.SGD(self.model.parameters(), lr=self.learning_rate, momentum=self.momentum)
+
+    def predict(self, features):
+        logits = super().predict(features)
+        probabilities = F.softmax(logits, dim=1)
+
+        # This dict is sorted.
+        label_probabilities = self.generate_label_probabilities(probabilities)
+
+        return label_probabilities
 
     def train_step(self, features, target_outputs):
         calculated_outputs = self.model(features)

@@ -15,7 +15,7 @@ class Dataset:
     def __init__(self, **kwargs):
         self.out_features = None
         self.in_features = None
-        self.gesture_recorder_class = "HandGestureRecorder"
+        self.gesture_recorder_class = "HandGestureRecorderLive"
         self.label_mappings = None
 
     def get_label_mappings(self):

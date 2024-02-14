@@ -91,6 +91,6 @@ def main(num_epochs, learning_rate, dataset, model, momentum, num_gates):
 
     # runner.evaluate(test_loader)
 
-    runner.save_loss_plot()
+    # runner.save_loss_plot()
 
     # runner.predict(final_test_set)

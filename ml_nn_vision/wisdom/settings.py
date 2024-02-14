@@ -1,6 +1,14 @@
 from pathlib import Path
 
-LABELS = ["handshake", "point", "thumbs_down", "thumbs_up", "victory"]
+LABELS = [
+    "crossed_fingers",
+    "handshake",
+    "love_single",
+    "point",
+    "thumbs_down",
+    "thumbs_up",
+    "victory",
+]
 
 PACKAGE_ROOT_DIR = Path(__file__).parent
 

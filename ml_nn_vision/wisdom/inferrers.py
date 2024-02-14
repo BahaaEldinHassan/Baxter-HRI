@@ -75,16 +75,14 @@ class HandGestureInferrerLive(AbstractContextManager):
 
                     # Infer (predict gesture).
                     if processed_landmark_data:
-                        logits = self.network.predict(np.array([processed_landmark_data]))
-                        probabilities = F.softmax(logits, dim=1)
-                        # This dict is sorted.
-                        label_probabilities = self.network.generate_label_probabilities(probabilities)
+                        label_probabilities = self.network.predict(np.array([processed_landmark_data]))
                         label_with_highest_probability = next(iter(label_probabilities))
 
                         self.camera_feed_proc.draw_text_around_bounding_box(
                             frame,
                             bbox,
-                            f"{label_with_highest_probability}",
+                            f"{label_with_highest_probability} "
+                            f"({label_probabilities[label_with_highest_probability]:.2f})",
                         )
 
         self.camera_feed_proc.run(process_frame_hook=process_frame_hook)
