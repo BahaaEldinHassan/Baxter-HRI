@@ -1,13 +1,19 @@
 from pathlib import Path
 
 LABELS = [
-    "crossed_fingers",
+    "beckoning",  # come here
+    # "crossed_fingers",
+    "closed_fist",
+    "finger_gun",
+    # "finger_heart",
     "handshake",
-    "love_single",
-    "point",
+    "okay",
+    "open_palm",
+    # "point",  # Later
+    "three_finger_salute",
     "thumbs_down",
     "thumbs_up",
-    "victory",
+    # "victory",
 ]
 
 PACKAGE_ROOT_DIR = Path(__file__).parent
