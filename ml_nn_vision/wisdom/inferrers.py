@@ -7,7 +7,7 @@ import mediapipe as mp
 import numpy as np
 import torch.nn.functional as F
 from savant.networks.cnn import CNNRunner
-from wisdom.common import CameraFeedProcessor
+from wisdom.common import CameraFeedProcessor, RealSenseFeedProcessor
 from wisdom.utils import get_bounding_box, landmark_to_numpy, landmark_to_ratio
 
 
@@ -32,7 +32,7 @@ class HandGestureInferrerLive(AbstractContextManager):
 
         self.network: typing.Optional[CNNRunner] = None
 
-        self.camera_feed_proc = CameraFeedProcessor()
+        self.camera_feed_proc = RealSenseFeedProcessor()
 
     def _initialize_network(self):
         runner = CNNRunner()
@@ -84,5 +84,81 @@ class HandGestureInferrerLive(AbstractContextManager):
                             f"{label_with_highest_probability} "
                             f"({label_probabilities[label_with_highest_probability]:.2f})",
                         )
+
+        self.camera_feed_proc.run(process_frame_hook=process_frame_hook)
+
+
+class HandGestureInferrerLive(HandGestureInferrerLive):
+    def __init__(self, **kwargs):
+        # Initialize MediaPipe Hands
+        self.mp_hands = mp.solutions.hands
+        self.hands = self.mp_hands.Hands()
+
+        self.mp_pose = mp.solutions.pose
+
+        # Initialize MediaPipe Drawing
+        self.mp_drawing = mp.solutions.drawing_utils
+
+        self.pose = self.mp_pose.Pose(min_detection_confidence=0.65, min_tracking_confidence=0.65)
+
+        self.network: typing.Optional[CNNRunner] = None
+
+        self.camera_feed_proc = RealSenseFeedProcessor()
+
+    def _initialize_network(self):
+        runner = CNNRunner()
+
+        checkpoint_filename = f"{runner.__class__.__name__}_checkpoint.ckpt"
+
+        if not (Path(checkpoint_filename).exists() and Path(checkpoint_filename).is_file()):
+            raise RuntimeError(f"Checkpoint file not found: {checkpoint_filename}")
+
+        runner.load_state(checkpoint_filename)
+
+        # runner.predict(final_test_set)
+        self.network = runner
+
+    def _initialize(self):
+        self._initialize_network()
+
+    def run(self):
+        def process_frame_hook(frame, frame_rgb, frame_shape):
+            h, w, c = frame_shape
+
+            # Process the image with MediaPipe
+            results = self.pose.process(frame_rgb)
+
+            if results.pose_landmarks:
+                body_landmarks = results.pose_landmarks
+                # for body_landmarks in results.pose_landmarks:
+                bbox = get_bounding_box((w, h), body_landmarks)
+
+                # Draw the landmarks and a rectangle around it.
+                self.camera_feed_proc.draw_rectangle(frame, bbox)
+                self.mp_drawing.draw_landmarks(frame, body_landmarks, self.mp_pose.POSE_CONNECTIONS)
+
+                processed_landmark_data = []
+
+                for idx, landmark in enumerate(body_landmarks.landmark):
+                    x, y = int(landmark.x * w), int(landmark.y * h)
+
+                    # Draw landmarks on image
+                    # cv2.circle(frame, (x, y), 5, (255, 0, 0), -1)
+
+                    # Convert landmark to ratio
+                    ratio_x, ratio_y = landmark_to_ratio((x, y), bbox)
+                    processed_landmark_data.append((ratio_x, ratio_y))
+
+                # Infer (predict gesture).
+                if processed_landmark_data:
+                    label_probabilities = self.network.predict(np.array([processed_landmark_data]))
+                    label_with_highest_probability = next(iter(label_probabilities))
+
+                    self.camera_feed_proc.draw_text_around_bounding_box(
+                        frame,
+                        bbox,
+                        f"{label_with_highest_probability} "
+                        f"({label_probabilities[label_with_highest_probability]:.2f})",
+                    )
 
         self.camera_feed_proc.run(process_frame_hook=process_frame_hook)

@@ -9,13 +9,18 @@ LABELS = [
     "handshake",
     "okay",
     "open_palm",
-    # "point",  # Later
-    "three_finger_salute",
+    "point",
+    # "three_finger_salute",
     "thumbs_down",
     "thumbs_up",
     # "victory",
+
+    "pose1",
+    "pose2",
 ]
 
 PACKAGE_ROOT_DIR = Path(__file__).parent
+
+YOLO_ROOT_DIR = PACKAGE_ROOT_DIR.parent / "yolo"
 
 TRAINING_DATA_DIR = PACKAGE_ROOT_DIR / "training_data"

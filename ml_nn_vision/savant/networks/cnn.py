@@ -20,7 +20,8 @@ class CNNModel(ModelBase):
 
         conv_layers = []
 
-        feature_dimension = (21, 2)
+        # feature_dimension = (21, 2)
+        feature_dimension = (33, 2)
 
         num_conv_layers = 2
         conv_in_channels = 1

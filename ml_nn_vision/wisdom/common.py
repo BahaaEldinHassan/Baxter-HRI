@@ -1,6 +1,8 @@
 import time
 
 import cv2
+import numpy as np
+import pyrealsense2 as rs
 
 
 class CameraFeedProcessor:
@@ -98,3 +100,76 @@ class CameraFeedProcessor:
 
             if key_event_hook:
                 key_event_hook(key)
+
+
+class RealSenseFeedProcessor(CameraFeedProcessor):
+    def close(self):
+        # self.cap.release()
+        cv2.destroyAllWindows()
+
+    def run(self, key_event_hook=None, process_frame_hook=None):
+        # Configure depth and color streams
+        pipeline = rs.pipeline()
+        config = rs.config()
+        config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)
+        config.enable_stream(rs.stream.color, 640, 480, rs.format.bgr8, 30)
+
+        # Start streaming
+        pipeline.start(config)
+
+        try:
+            start_time = time.time()
+
+            while True:
+                # Wait for a coherent pair of frames: depth and color
+                frames = pipeline.wait_for_frames()
+                depth_frame = frames.get_depth_frame()
+                color_frame = frames.get_color_frame()
+                if not depth_frame or not color_frame:
+                    continue
+
+                # Convert images to numpy arrays
+                depth_image = np.asanyarray(depth_frame.get_data())
+                color_image = np.asanyarray(color_frame.get_data())
+
+                # Measure distance to a specific point (e.g., center pixel)
+                # center_x = depth_image.shape[1] // 2
+                # center_y = depth_image.shape[0] // 2
+                # distance = depth_image[center_y, center_x]
+                #
+                # # Display depth image with distance value
+                # depth_colormap = cv2.applyColorMap(cv2.convertScaleAbs(depth_image, alpha=0.03), cv2.COLORMAP_JET)
+                # print(f'Distance: {distance} mm')
+
+                frame = color_image
+                # Flip the frame for mirror effect.
+                # frame = cv2.flip(frame, 1)
+
+                h, w, c = frame.shape
+
+                frame_rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+
+                if process_frame_hook:
+                    process_frame_hook(frame, frame_rgb, (h, w, c))
+
+                # Draw FPS text
+                fps_text = "FPS: {:.2f}".format(1.0 / (time.time() - start_time))
+                self.draw_text_around_bounding_box(frame, (0, 0, w, h), fps_text)
+
+
+                # Display images
+                # cv2.imshow('RealSense', np.hstack((color_image, depth_colormap)))
+                cv2.imshow('RE', frame)
+
+                # Wait for a key press (self.delay_ms-millisecond delay).
+                key = cv2.waitKey(self.delay_ms) & 0xFF
+
+                # Break the loop when 'q' is pressed.
+                if key == ord("q"):
+                    break
+
+                if key_event_hook:
+                    key_event_hook(key)
+        finally:
+            # Stop streaming
+            pipeline.stop()
