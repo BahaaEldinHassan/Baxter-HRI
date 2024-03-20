@@ -1,23 +1,25 @@
 from pathlib import Path
 
-LABELS = [
+BODY_POSE_LANDMARK_COUNT = 33
+
+HAND_GESTURE_LANDMARK_COUNT = 21
+
+BODY_POSE_LABELS = [
+    "thinking",
+    "victory",
+]
+
+HAND_GESTURE_LABELS = [
     "beckoning",  # come here
-    # "crossed_fingers",
     "closed_fist",
-    "finger_gun",
-    # "finger_heart",
     "handshake",
-    "okay",
     "open_palm",
-    "point",
-    # "three_finger_salute",
+    # "point",
     "thumbs_down",
     "thumbs_up",
-    # "victory",
-
-    "pose1",
-    "pose2",
 ]
+
+LABELS = BODY_POSE_LABELS + HAND_GESTURE_LABELS
 
 PACKAGE_ROOT_DIR = Path(__file__).parent
 

@@ -6,7 +6,7 @@ from .datasets import Dataset
 from .networks.cnn import CNNRunner
 
 _datasets_map = {
-    "static": Dataset,
+    "combined": Dataset,
 }
 
 _runners_map = {
@@ -20,7 +20,7 @@ _runners_map = {
 @click.option(
     "-d",
     "--dataset",
-    default="static",
+    default=list(_datasets_map.keys())[0],
     help="Dataset to use.",
     required=False,
     type=click.Choice(list(_datasets_map.keys()), case_sensitive=False),
@@ -28,7 +28,7 @@ _runners_map = {
 @click.option(
     "-M",
     "--model",
-    default="cnn",
+    default=list(_runners_map.keys())[0],
     help="Neural network model to use.",
     required=False,
     type=click.Choice(list(_runners_map.keys()), case_sensitive=False),
@@ -49,7 +49,14 @@ _runners_map = {
     required=False,
     type=int,
 )
-def main(num_epochs, learning_rate, dataset, model, momentum, num_gates):
+@click.option(
+    "-cp",
+    "--checkpoint",
+    help="Checkpoint file to use.",
+    required=False,
+    type=str,
+)
+def main(num_epochs, learning_rate, dataset, model, momentum, num_gates, checkpoint):
     dataset_obj = _datasets_map[dataset]()
     train_loader, validation_loader, test_loader = dataset_obj.process()
 
@@ -77,10 +84,13 @@ def main(num_epochs, learning_rate, dataset, model, momentum, num_gates):
 
     runner = _runners_map[model](**runner_kwargs)
 
-    checkpoint_filename = f"{runner.__class__.__name__}_checkpoint.ckpt"
+    if checkpoint:
+        checkpoint_filename = checkpoint
+    else:
+        checkpoint_filename = f"{runner.__class__.__name__}_checkpoint.ckpt"
 
-    if Path(checkpoint_filename).is_file():
-        runner.load_state(checkpoint_filename)
+    # if Path(checkpoint_filename).is_file():
+    #     runner.load_state(checkpoint_filename)
 
     try:
         runner.train(train_loader, validation_loader)

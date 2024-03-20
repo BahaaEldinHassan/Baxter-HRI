@@ -1,19 +1,20 @@
 import time
 from contextlib import AbstractContextManager
-from ultralytics import YOLO
+
 import cv2
 import mediapipe as mp
 import numpy as np
+from ultralytics import YOLO
 from ultralytics.utils.plotting import Annotator
 
 from .common import CameraFeedProcessor, RealSenseFeedProcessor
 from .settings import TRAINING_DATA_DIR, YOLO_ROOT_DIR
 from .utils import get_bounding_box, landmark_to_ratio
 
-model = YOLO(YOLO_ROOT_DIR / 'yolov8s.pt')  # load a pretrained model (recommended for training)
+model = YOLO(YOLO_ROOT_DIR / "yolov8s.pt")  # load a pretrained model (recommended for training)
 
 
-class YoloRecorderLive(AbstractContextManager):
+class RealTimeYoloRecorder(AbstractContextManager):
     def __enter__(self):
         # self.run()
         self._lazy_initialization()
@@ -32,11 +33,10 @@ class YoloRecorderLive(AbstractContextManager):
         self.hands = self.mp_hands.Hands()
 
         self.mp_pose = mp.solutions.pose
+        self.pose = self.mp_pose.Pose(min_detection_confidence=0.65, min_tracking_confidence=0.65)
 
         # Initialize MediaPipe Drawing
         self.mp_drawing = mp.solutions.drawing_utils
-
-        self.pose = self.mp_pose.Pose(min_detection_confidence=0.65, min_tracking_confidence=0.65)
 
         self.training_data_dir = TRAINING_DATA_DIR / self.__class__.__name__ / self.label
 
