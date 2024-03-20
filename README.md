@@ -1,5 +1,14 @@
 # Robot Human Interaction
 
+## Systme Requiements
+To be able to use this project the following must be installed on your local system:
+
+  - Ubuntu 20.04.06 LTS
+  - Python 3.8.10
+  - ROS Noetic
+
+There are a must to be able to use this project as there are what the project was developed on & has not been tested on any other version of the listed above.
+
 ## Computer Vision
 
 To run the vision modules, we need `Python 3.11+` (with `pip`). The other required Python packages are described in `requirements.txt`. Before executing any of the modules described in this section, make sure to be using this Python version and have the requirements installed.
@@ -102,6 +111,9 @@ python -m wisdom record -l thumbs_up -cf realsense -r yolo
 ```
 
 ## Robot Controller
+
+#### Requiements
+For the robot controller 
 
 #### Setting up & running the robot controller
 First the user must open a terminal & cd into the ros workspace
