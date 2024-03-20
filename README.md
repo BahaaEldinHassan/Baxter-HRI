@@ -120,7 +120,7 @@ When downloading the project ensure that it is placed within the ros workspace &
 spacenav_node must be install to be able to use the manual controll part of the project, to install the following commands must be ran:
 ```shell
 $ sudo apt install spacenavd
-$ sudo apt install ros-noetic-spacenav-node
+$ sudo apt install ros-indigo-spacenav-node
 ```
 
 #### Setting up & running the robot controller
