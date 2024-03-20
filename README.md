@@ -115,6 +115,8 @@ python -m wisdom record -l thumbs_up -cf realsense -r yolo
 #### Requiements
 For the robot controller ensure that `ROS Noetic` has been installed & the local operating system is `Ubuntu 20.04.6` as per the system requirements section states.
 
+When downloading the project ensure that it is placed within the ros workspace & inside the source folder otherwise the code will not be able to connec to baxter robot.
+
 #### Setting up & running the robot controller
 First the user must open a terminal & cd into the ros workspace
 ```shell
@@ -136,9 +138,9 @@ Open a new terminal if the user is not already inside the ros workspace when ope
 $ rosrun baxter_tool enable_robot.py -e 
 ```
 
-Once the robot has been enabled the user can now cd into the robot controller workspace
+Once the robot has been enabled the user can now cd into the robot controller workspace (the [path_to_robot_controller] should be replace with the your path to the robot_controller folder)
 ```shell
-$ cd src/Group_7/robot_controller 
+$ cd src/[path_to_robot_controller]/robot_controller 
 ```
 
 Everything should now be set up for the user to start running the main program using the command
