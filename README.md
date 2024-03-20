@@ -4,7 +4,7 @@
 To be able to use this project the following must be installed on your local system:
 
   - Ubuntu 20.04.06 LTS
-  - Python 3.8.10
+  - Python 3.8.10 or 3.11+
   - ROS Noetic
 
 There are a must to be able to use this project as there are what the project was developed on & has not been tested on any other version of the listed above.
