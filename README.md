@@ -113,7 +113,7 @@ python -m wisdom record -l thumbs_up -cf realsense -r yolo
 ## Robot Controller
 
 #### Requiements
-For the robot controller 
+For the robot controller ensure that `ROS Noetic` has been installed & the local operating system is `Ubuntu 20.04.6`
 
 #### Setting up & running the robot controller
 First the user must open a terminal & cd into the ros workspace
