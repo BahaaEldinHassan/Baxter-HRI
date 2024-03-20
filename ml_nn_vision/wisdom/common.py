@@ -156,6 +156,7 @@ class RealSenseFeedProcessor(CameraFeedProcessor):
                     process_frame_hook(
                         frame=frame,
                         frame_rgb=frame_rgb,
+                        depth_image=depth_image,
                     )
 
                 # Draw FPS text

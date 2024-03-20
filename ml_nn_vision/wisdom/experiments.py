@@ -25,8 +25,8 @@ class RealTimeYoloRecorder(AbstractContextManager):
         # Release the VideoCapture and destroy OpenCV windows
         self.camera_feed_proc.close()
 
-    def __init__(self, label):
-        self.label = label
+    def __init__(self, **kwargs):
+        self.label = kwargs["label"]
 
         # Initialize MediaPipe Hands
         self.mp_hands = mp.solutions.hands
@@ -40,7 +40,7 @@ class RealTimeYoloRecorder(AbstractContextManager):
 
         self.training_data_dir = TRAINING_DATA_DIR / self.__class__.__name__ / self.label
 
-        self.camera_feed_proc = RealSenseFeedProcessor()
+        self.camera_feed_proc = kwargs["camera_feed_processor_class"]()
 
     def _lazy_initialization(self):
         # Lazy initializations.
@@ -53,8 +53,10 @@ class RealTimeYoloRecorder(AbstractContextManager):
         np.save(self.training_data_dir / filename, np.array(landmark_data).flatten())
 
     def run(self):
-        def process_frame_hook(frame, frame_rgb, frame_shape, depth_image=None):
-            h, w, c = frame_shape
+        def process_frame_hook(**kwargs):
+            frame = kwargs["frame"]
+            frame_rgb = kwargs["frame_rgb"]
+            depth_image = kwargs["depth_image"]
 
             # Process the image with MediaPipe
             # results = self.pose.process(frame_rgb)
