@@ -101,3 +101,35 @@ To run the real-time depth inference using the Intel RealSense camera with YOLO,
 python -m wisdom record -l thumbs_up -cf realsense -r yolo
 ```
 
+## Robot Controller
+
+#### Setting up & running the robot controller
+First the user must open a terminal & cd into the ros workspace
+```shell
+$ cd ros_ws 
+```
+
+Then the user must run the sh file to connect to baxter
+```shell
+$ ./baxter.sh
+```
+
+To get the spacenav_node topics to use the 3D connection space mouse, a command line must be run first
+```shell
+$ roslaunch spacenav_node classic.launch
+```
+
+Open a new terminal if the user is not already inside the ros workspace when opening a new terminal then the user must run the first command again. Once inside the ros_ws re-run the sh command again. Once the user has connected to the baxter again the user must enable the robot using
+```shell
+$ rosrun baxter_tool enable_robot.py -e 
+```
+
+Once the robot has been enabled the user can now cd into the robot controller workspace
+```shell
+$ cd src/Group_7/robot_controller 
+```
+
+Everything should now be set up for the user to start running the main program using the command
+```shell
+$ python3 MainMenu.py 
+```
