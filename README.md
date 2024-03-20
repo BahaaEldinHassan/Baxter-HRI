@@ -117,6 +117,12 @@ For the robot controller ensure that `ROS Noetic` has been installed & the local
 
 When downloading the project ensure that it is placed within the ros workspace & inside the source folder otherwise the code will not be able to connec to baxter robot.
 
+spacenav_node must be install to be able to use the manual controll part of the project, to install the following commands must be ran:
+```shell
+$ sudo apt install spacenavd
+$ sudo apt install ros-noetic-spacenav-node
+```
+
 #### Setting up & running the robot controller
 First the user must open a terminal & cd into the ros workspace
 ```shell
