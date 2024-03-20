@@ -1,6 +1,6 @@
 # Robot Human Interaction
 
-## Systme Requiements
+## System Requiements
 To be able to use this project the following must be installed on your local system:
 
   - Ubuntu 20.04.06 LTS
