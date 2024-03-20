@@ -89,8 +89,8 @@ class CameraFeedProcessor:
                 )
 
             # Draw FPS text
-            fps_text = "FPS: {:.2f}".format(1.0 / (time.time() - start_time))
-            self.draw_text_around_bounding_box(frame, (0, 0, w, h), fps_text)
+            # fps_text = "FPS: {:.2f}".format(1.0 / (time.time() - start_time))
+            # self.draw_text_around_bounding_box(frame, (0, 0, w, h), fps_text)
 
             cv2.imshow("Camera feed", frame)
 
@@ -160,12 +160,12 @@ class RealSenseFeedProcessor(CameraFeedProcessor):
                     )
 
                 # Draw FPS text
-                fps_text = "FPS: {:.2f}".format(1.0 / (time.time() - start_time))
-                self.draw_text_around_bounding_box(frame, (0, 0, w, h), fps_text)
+                # fps_text = "FPS: {:.2f}".format(1.0 / (time.time() - start_time))
+                # self.draw_text_around_bounding_box(frame, (0, 0, w, h), fps_text)
 
                 # Display images
                 # cv2.imshow('RealSense', np.hstack((color_image, depth_colormap)))
-                cv2.imshow("RE", frame)
+                cv2.imshow("RealSense", frame)
 
                 # Wait for a key press (self.delay_ms-millisecond delay).
                 key = cv2.waitKey(self.delay_ms) & 0xFF
