@@ -44,7 +44,10 @@ class RealTimeHandGestureRecorder(AbstractContextManager):
         np.save(self.training_data_dir / filename, np.array(landmark_data).flatten())
 
     def run(self):
-        def process_frame_hook(frame, frame_rgb, frame_shape):
+        def process_frame_hook(**kwargs):
+            frame = kwargs["frame"]
+            frame_rgb = kwargs["frame_rgb"]
+            frame_shape = frame.shape
             h, w, c = frame_shape
 
             # Process the image with MediaPipe
@@ -116,7 +119,10 @@ class RealTimeBodyPoseRecorder(AbstractContextManager):
         def key_event_hook(e):
             ...
 
-        def process_frame_hook(frame, frame_rgb, frame_shape):
+        def process_frame_hook(**kwargs):
+            frame = kwargs["frame"]
+            frame_rgb = kwargs["frame_rgb"]
+            frame_shape = frame.shape
             h, w, c = frame_shape
 
             # Process the image with MediaPipe
