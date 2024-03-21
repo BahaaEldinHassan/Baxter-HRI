@@ -144,7 +144,7 @@ Open a new terminal if the user is not already inside the ros workspace when ope
 $ rosrun baxter_tool enable_robot.py -e 
 ```
 
-Once the robot has been enabled the user can now cd into the robot controller workspace (the [path_to_robot_controller] should be replace with the your path to the robot_controller folder)
+Once the robot has been enabled the user can now cd into the robot controller workspace (the [path_to_robot_controller] should be replace with your path to the robot_controller folder)
 ```shell
 $ cd src/[path_to_robot_controller]/robot_controller 
 ```
