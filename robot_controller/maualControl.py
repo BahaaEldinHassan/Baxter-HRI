@@ -10,6 +10,7 @@ from sensor_msgs.msg import Joy
 import baxter_interface
 from baxter_interface import CHECK_VERSION
 from geometry_msgs.msg import PoseStamped, Pose, Point, Quaternion
+from std_msgs.msg import Header
 from baxter_core_msgs.srv import SolvePositionIK, SolvePositionIKRequest
 
 #　这个库也是可以控制移动的，pykdl用于描述和处理机器人模型、运动学和动力学
